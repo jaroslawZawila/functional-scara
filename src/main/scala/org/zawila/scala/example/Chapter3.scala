@@ -37,7 +37,7 @@ object List {
     case Cons(x, t) => Cons(first, t)
   }
 
-  def drop[A](l: List[A], idx: Int) = {
+  def drop[A](l: List[A], idx: Int): List[A] = {
     def loop(l: List[A], index:Int): List[A] = index match {
       case x if x < idx => loop(tail(l), index + 1)
       case _ => l
@@ -82,9 +82,39 @@ object List {
 
   def lengths2[A](l: List[A]): Int = foldLeft(l, 0)((index, _ ) => index + 1)
 
-  def revers[A](l: List[A]): List[A] = {
+  def revers[A](l: List[A]): List[A] = foldLeft(l, List[A]())((ll: List[A], l: A) => Cons(l, ll))
 
+  def append[A](l: List[A], x: A): List[A] = foldRight(l, List(x))((x: A, l: List[A]) => Cons(x, l))
+  def append2[A](l: List[A], x: List[A]): List[A] = foldRight(l, x)((x: A, l: List[A]) => Cons(x, l))
+
+  def merge[A](l: List[List[A]]): List[A] = foldRight(l, List[A]())(( il:List[A], nl: List[A]) => foldRight(il, nl)((x: A, l: List[A]) => Cons(x, l)))
+
+  def map[A, B](l: List[A], f: A => B): List[B] = foldRight(l, List[B]())((a,b) => (Cons(f(a),b)))
+
+  def filter[A](l: List[A], f: A => Boolean): List[A] = foldRight(l, List[A]())((a,b) => f(a) match {
+    case true => Cons(a,b)
+    case false => b
+  })
+
+  def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] = merge(map(as, f))
+
+  def filter2[A](as: List[A], f: A => Boolean): List[A] = flatMap(as)(a => f(a) match {
+    case true => Cons(a, Nil)
+    case false => Nil
+  })
+
+  def zipWith[A](as: List[A], ax: List[A])(f: (A,A) => A): List[A] = {
+    def loop(as: List[A], ax: List[A], r: List[A]): List[A] = as match{
+      case Nil => r
+      case Cons(x, xs) => {
+        ax match {
+          case Cons(y, ys) => loop(xs, ys, append(r, f(x,y)))
+        }
+      }
+    }
+    loop(as, ax, List[A]())
   }
+
 }
 
 class Chapter3Test extends FunSpec with Matchers {
@@ -136,5 +166,38 @@ class Chapter3Test extends FunSpec with Matchers {
 
   it("lengths 2 ") {
     lengths2(List(1,2,3,4)) should equal(4)
+  }
+
+  it("reverse") {
+    revers(List(1,2,3)) should be(List(3,2,1))
+  }
+
+  it("append") {
+    append(List(1,2), 3) should be(List(1,2,3))
+  }
+
+  it("Merge") {
+    merge(List(List(1,2), List(3,4,5))) should be(List(1,2,3,4,5))
+  }
+
+  it("Map") {
+    map( List(1,2,3), (x :Int) => { 1 + x }) should be(List(2,3,4))
+    map(List("a", "b", "c"), (x: String) => {s"$x x"}) should be(List("a x", "b x", "c x"))
+  }
+
+  it("Filter") {
+    filter(List(1,2,3,4), (x: Int) => x % 2 == 0) should be(List(2,4))
+  }
+
+  it("flatMap") {
+    flatMap(List(1,2,3))(i => List(i,i)) should be(List(1,1,2,2,3,3))
+  }
+
+  it("Filter2") {
+    filter2(List(1,2,3,4), (x: Int) => x % 2 == 0) should be(List(2,4))
+  }
+
+  it("zipWith") {
+    zipWith(List(1,2,3), List(4,5,6))((a, b) => a + b) should be(List(5,7,9))
   }
 }

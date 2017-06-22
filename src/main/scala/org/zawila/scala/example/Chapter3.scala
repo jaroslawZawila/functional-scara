@@ -115,6 +115,28 @@ object List {
     loop(as, ax, List[A]())
   }
 
+  def head[A](as: List[A]): A = as match {
+    case Cons(x, xs) => x
+  }
+
+  def hasSubsequence[A](as: List[A], sub: List[A]): Boolean = {
+    def loop(o: List[A],s: List[A], r: List[A]): Boolean = {
+      if(sub != r) {
+        o match {
+          case Nil => false
+          case Cons(x, xs) => if(x == head(s)) {
+            loop(xs, tail(s), append(r, x))
+          }  else {
+            loop(xs, sub, List[A]())
+          }
+        }
+      } else {
+        true
+      }
+    }
+    loop(as, sub, List[A]())
+  }
+
 }
 
 class Chapter3Test extends FunSpec with Matchers {
@@ -199,5 +221,11 @@ class Chapter3Test extends FunSpec with Matchers {
 
   it("zipWith") {
     zipWith(List(1,2,3), List(4,5,6))((a, b) => a + b) should be(List(5,7,9))
+  }
+
+  it("subsequence") {
+    hasSubsequence(List(1,2,3,4), List(2,3)) should be(true)
+    hasSubsequence(List(1,2,3,4), List(2,4)) should be(false)
+    hasSubsequence(List(1,2,3,4), List(1)) should be(true)
   }
 }

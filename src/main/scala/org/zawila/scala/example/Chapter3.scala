@@ -227,5 +227,7 @@ class Chapter3Test extends FunSpec with Matchers {
     hasSubsequence(List(1,2,3,4), List(2,3)) should be(true)
     hasSubsequence(List(1,2,3,4), List(2,4)) should be(false)
     hasSubsequence(List(1,2,3,4), List(1)) should be(true)
+    hasSubsequence(List(1,2,3,4), List()) should be(true)
+    hasSubsequence(List(1,2,3,4), List(1,2,3,4,5)) should be(false)
   }
 }

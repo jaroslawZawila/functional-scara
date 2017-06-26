@@ -25,11 +25,12 @@ sealed trait Option[+A] {
 
 object Option {
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] = {
-    a.foldRight[Option[List[A]]](Some(Nil))((x, y) => map2(x,y)(_ :: _))
-  }
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = traverse(a)(x => x)
 
   def map2[A, B, C](a: Option[A], b: Option[B])(f: (A,B) => C): Option[C] = a flatMap(a => b.map(b => f(a,b)))
+
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = a.foldRight[Option[List[B]]](Some(Nil))((x, y) => map2(f(x),y)(_ :: _))
+
 }
 
 case class Some[+A](get: A) extends Option[A]
@@ -89,6 +90,10 @@ class Chapter4Test extends FunSpec with Matchers {
 
   it("sequance") {
     Option.sequence(List(Some(1), Some(2), Some(3))) should be( Some(List(1,2,3)) )
-//    Option.sequence(List(Some(1), None, Some(3))) should be(None)
+    Option.sequence(List(Some(1), None, Some(3))) should be(None)
+  }
+
+  it("traverse") {
+    Option.traverse(List(1,2,3))(x => Some(x + 1)) should be(Some(List(2,3,4)))
   }
 }

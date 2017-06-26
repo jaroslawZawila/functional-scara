@@ -1,6 +1,7 @@
 package org.zawila.scala.example
 
 import org.scalatest.{FunSpec, Matchers}
+import org.zawila.scala.example
 
 sealed trait Option[+A] {
   def map[B](f: A => B): Option[B] = this match {
@@ -18,11 +19,36 @@ sealed trait Option[+A] {
   def orElse[B >: A](ob: => Option[B]): Option[B] = this map (Some(_)) getOrElse(ob)
 
   def filter(f: A => Boolean): Option[A] =  flatMap(a => if (f(a)) Some(a) else None)
+
+
 }
+
+object Option {
+
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = {
+    a.foldRight[Option[List[A]]](Some(Nil))((x, y) => map2(x,y)(_ :: _))
+  }
+
+  def map2[A, B, C](a: Option[A], b: Option[B])(f: (A,B) => C): Option[C] = a flatMap(a => b.map(b => f(a,b)))
+}
+
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
 
-class Chapter4 extends FunSpec with Matchers {
+object Chapter4 {
+  def variance(xs: Seq[Double]): Option[Double] = {
+    def mean(xs: Seq[Double]): Option[Double] = if (xs.isEmpty) example.None else Some(xs.sum / xs.size)
+
+   mean(xs) flatMap(m => Some(xs.map(x => math.pow(x - m, 2)).sum)) flatMap(x => if (xs.size - 1 > 0) Some(x / (xs.size -1)) else None)
+
+  }
+
+
+
+}
+
+class Chapter4Test extends FunSpec with Matchers {
+  import Chapter4._
 
   it("map") {
     Some(1).map(x => x * 5) should be(Some(5))
@@ -47,5 +73,22 @@ class Chapter4 extends FunSpec with Matchers {
   it("filter") {
     Some(1).filter(x => x > 0) should be(Some(1))
     Some(1).filter(x => x < 0) should be(None)
+  }
+
+  it("variance") {
+    variance(Seq(17, 15, 23, 7, 9, 13)) should be(Some(33.2))
+    variance(Seq(17)) should be(None)
+    variance(Seq()) should be(None)
+  }
+
+  it("map2") {
+    Option.map2(Some(2), Some(3))(_ * _) should be(Some(6))
+    Option.map2[Int,Int,Int](Some(2), None)(_ * _) should be(None)
+    Option.map2[Int,Int,Int](None, Some(3))(_ * _) should be(None)
+  }
+
+  it("sequance") {
+    Option.sequence(List(Some(1), Some(2), Some(3))) should be( Some(List(1,2,3)) )
+//    Option.sequence(List(Some(1), None, Some(3))) should be(None)
   }
 }

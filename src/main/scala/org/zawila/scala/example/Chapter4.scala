@@ -96,14 +96,44 @@ class Chapter4Test extends FunSpec with Matchers {
   it("traverse") {
     Option.traverse(List(1,2,3))(x => Some(x + 1)) should be(Some(List(2,3,4)))
   }
+
+  val exception = new Exception()
+  it("Either map") {
+    Either.Try[Int]{1} map(_ + 2) should be(Right(3))
+    Either.Try[Int]{throw exception} map(_ + 2) should be(Left(exception))
+  }
+
+  it("Either flatMap") {
+    Either.Try[Int](1).flatMap(x => Either.Try(x + 1)) should be(Right(2))
+    Either.Try[Int](throw exception).flatMap(x => Either.Try(x + 1)) should be(Left(exception))
+  }
+
+  it("Either orElse") {
+    Either.Try[Int](1).orElse(Right(3)) should be(Right(1))
+    Either.Try[Int](throw exception).orElse(Right(3)) should be(Right(3))
+  }
+
+  it("Eighter map2") {
+    Either.Try(1).map2(Right(2))(_ + _) should be(Right(3))
+    Either.Try[Int](throw exception).map2(Right(2))(_ + _) should be(Left(exception))
+  }
 }
 
 
 sealed trait Either[+E, +A] {
-  def map[B](f: A => B): Either[E, B] = ???
-  def flatMap[EE >: E, B](f: A => Either[EE, B]): Either[EE, B] = ???
-  def orElse[EE >: E,B >: A](b: => Either[EE, B]): Either[EE, B] = ???
-  def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = ???
+  def map[B](f: A => B): Either[E, B] = this match {
+    case Right(x) => Right(f(x))
+    case l @ Left(x) => l
+  }
+  def flatMap[EE >: E, B](f: A => Either[EE, B]): Either[EE, B] = this match {
+    case Right(x) => f(x)
+    case l @ Left(_) => l
+  }
+  def orElse[EE >: E,B >: A](b: => Either[EE, B]): Either[EE, B] = this match {
+    case r @ Right(x) => r
+    case Left(_) => b
+  }
+  def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = this.flatMap(a => b.map(bb => f(a,bb)))
 }
 
 object Either {

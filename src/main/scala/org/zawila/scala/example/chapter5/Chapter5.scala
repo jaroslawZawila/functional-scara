@@ -1,6 +1,8 @@
-package org.zawila.scala.example
+package org.zawila.scala.example.chapter5
 
 import org.scalatest.{FunSpec, Matchers}
+
+import scala.annotation.tailrec
 
 
 sealed trait Stream[+A] {
@@ -10,13 +12,25 @@ sealed trait Stream[+A] {
   }
 
   def toList: List[A] = {
+    @tailrec
     def loop[A](stream: Stream[A], l: List[A]): List[A] = stream match {
       case Empty => l
       case Cons(h, t) => loop(t(), h() :: l)
     }
 
-    loop(this, List.empty)
+    loop(this, List.empty).reverse
   }
+
+  import Stream._
+  def take(n: Int): Stream[A] = this match {
+    case Cons(h, t) if n > 1 => cons(h(), t().take(n - 1))
+    case Cons(h, _) if n == 1 => cons(h(), empty )
+    case _ => Empty
+  }
+
+  def drop(n: Int): Stream[A] = ???
+
+  def takeWhile(p: A => Boolean): Stream[A] = ???
 }
 
 case object Empty extends Stream[Nothing]
@@ -38,7 +52,13 @@ object Stream {
 
 class StreamTest extends FunSpec with Matchers {
 
-  it("Strem toList") {
-    Stream(1,2,3,4).toList should be(List(1,2,3,4))
+  it("Stream toList") {
+    Stream(1, 2, 3, 4).toList should be(List(1, 2, 3, 4))
+    Stream.empty[Int].toList should be(List.empty[Int])
+  }
+
+  it("Stream take") {
+    Stream(1, 2, 3, 4).take(2).toList should be(List(1, 2))
+    Stream(1, 2, 3, 4).take(0).toList should be(List())
   }
 }

@@ -3,38 +3,38 @@ package org.zawila.scala.example
 import org.scalatest.{FunSpec, Matchers}
 
 sealed trait List2[+A] // `List` data type, parameterized on a type, `A`
-case object Nil2 extends List2[Nothing] // A `List` data constructor representing the empty list
-/* Another data constructor, representing nonempty lists. Note that `tail` is another `List[A]`,
-which may be `Nil` or another `Cons`.
+case object Nil2 extends List2[Nothing] // A `List` data Cons2tructor representing the empty list
+/* Another data Cons2tructor, representing nonempty lists. Note that `tail` is another `List[A]`,
+which may be `Nil` or another `Cons2`.
  */
-case class Cons[+A](head: A, tail: List2[A]) extends List2[A]
+case class Cons2[+A](head: A, tail: List2[A]) extends List2[A]
 
 object List2 {
   // `List` companion object. Contains functions for creating and working with lists.
   def sum(ints: List2[Int]): Int = ints match {
     // A function that uses pattern matching to add up a list of integers
     case Nil2 => 0 // The sum of the empty list is 0.
-    case Cons(x, xs) => x + sum(xs) // The sum of a list starting with `x` is `x` plus the sum of the rest of the list.
+    case Cons2(x, xs) => x + sum(xs) // The sum of a list starting with `x` is `x` plus the sum of the rest of the list.
   }
 
   def product(ds: List2[Double]): Double = ds match {
     case Nil2 => 1.0
-    case Cons(0.0, _) => 0.0
-    case Cons(x, xs) => x * product(xs)
+    case Cons2(0.0, _) => 0.0
+    case Cons2(x, xs) => x * product(xs)
   }
 
   def apply[A](as: A*): List2[A] = // Variadic function syntax
     if (as.isEmpty) Nil2
-    else Cons(as.head, apply(as.tail: _*))
+    else Cons2(as.head, apply(as.tail: _*))
 
   def tail[A](l: List2[A]): List2[A] =  l match {
     case Nil2 => Nil2
-    case Cons(_, t) => t
+    case Cons2(_, t) => t
   }
 
   def setHead[A](list: List2[A], first: A) = list match {
     case Nil2 => List2(first)
-    case Cons(x, t) => Cons(first, t)
+    case Cons2(x, t) => Cons2(first, t)
   }
 
   def drop[A](l: List2[A], idx: Int): List2[A] = {
@@ -47,18 +47,18 @@ object List2 {
 
   def dropWhile[A](l: List2[A], f: A => Boolean): List2[A] = l match {
     case Nil2 => Nil2
-    case Cons(x, xs) => if (f(x)) l else dropWhile(tail(l), f)
+    case Cons2(x, xs) => if (f(x)) l else dropWhile(tail(l), f)
   }
 
   def init[A](list: List2[A]): List2[A] = list match {
       case Nil2 => Nil2
-      case Cons(x, Nil2) => Nil2
-      case Cons(x,xs) => Cons(x, init(xs))
+      case Cons2(x, Nil2) => Nil2
+      case Cons2(x,xs) => Cons2(x, init(xs))
   }
 
   def foldRight[A,B](as: List2[A], z: B)(f: (A, B) => B): B = as match {
     case Nil2 => z
-    case Cons(x, xs) => f(x, foldRight(xs, z)(f))
+    case Cons2(x, xs) => f(x, foldRight(xs, z)(f))
   }
 
   def sum2(ns: List2[Int]) = {
@@ -73,7 +73,7 @@ object List2 {
 
   def foldLeft[A, B](as: List2[A], z: B)(f: (B, A) => B): B = as match {
     case Nil2 => z
-    case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
+    case Cons2(x, xs) => foldLeft(xs, f(z, x))(f)
   }
 
   def sum3(ns: List2[Int]): Int = {
@@ -82,33 +82,33 @@ object List2 {
 
   def lengths2[A](l: List2[A]): Int = foldLeft(l, 0)((index, _ ) => index + 1)
 
-  def revers[A](l: List2[A]): List2[A] = foldLeft(l, List2[A]())((ll: List2[A], l: A) => Cons(l, ll))
+  def revers[A](l: List2[A]): List2[A] = foldLeft(l, List2[A]())((ll: List2[A], l: A) => Cons2(l, ll))
 
-  def append[A](l: List2[A], x: A): List2[A] = foldRight(l, List2(x))((x: A, l: List2[A]) => Cons(x, l))
-  def append2[A](l: List2[A], x: List2[A]): List2[A] = foldRight(l, x)((x: A, l: List2[A]) => Cons(x, l))
+  def append[A](l: List2[A], x: A): List2[A] = foldRight(l, List2(x))((x: A, l: List2[A]) => Cons2(x, l))
+  def append2[A](l: List2[A], x: List2[A]): List2[A] = foldRight(l, x)((x: A, l: List2[A]) => Cons2(x, l))
 
-  def merge[A](l: List2[List2[A]]): List2[A] = foldRight(l, List2[A]())((il:List2[A], nl: List2[A]) => foldRight(il, nl)((x: A, l: List2[A]) => Cons(x, l)))
+  def merge[A](l: List2[List2[A]]): List2[A] = foldRight(l, List2[A]())((il:List2[A], nl: List2[A]) => foldRight(il, nl)((x: A, l: List2[A]) => Cons2(x, l)))
 
-  def map[A, B](l: List2[A], f: A => B): List2[B] = foldRight(l, List2[B]())((a, b) => (Cons(f(a),b)))
+  def map[A, B](l: List2[A], f: A => B): List2[B] = foldRight(l, List2[B]())((a, b) => (Cons2(f(a),b)))
 
   def filter[A](l: List2[A], f: A => Boolean): List2[A] = foldRight(l, List2[A]())((a, b) => f(a) match {
-    case true => Cons(a,b)
+    case true => Cons2(a,b)
     case false => b
   })
 
   def flatMap[A, B](as: List2[A])(f: A => List2[B]): List2[B] = merge(map(as, f))
 
   def filter2[A](as: List2[A], f: A => Boolean): List2[A] = flatMap(as)(a => f(a) match {
-    case true => Cons(a, Nil2)
+    case true => Cons2(a, Nil2)
     case false => Nil2
   })
 
   def zipWith[A](as: List2[A], ax: List2[A])(f: (A,A) => A): List2[A] = {
     def loop(as: List2[A], ax: List2[A], r: List2[A]): List2[A] = as match{
       case Nil2 => r
-      case Cons(x, xs) => {
+      case Cons2(x, xs) => {
         ax match {
-          case Cons(y, ys) => loop(xs, ys, append(r, f(x,y)))
+          case Cons2(y, ys) => loop(xs, ys, append(r, f(x,y)))
         }
       }
     }
@@ -116,7 +116,7 @@ object List2 {
   }
 
   def head[A](as: List2[A]): A = as match {
-    case Cons(x, xs) => x
+    case Cons2(x, xs) => x
   }
 
   def hasSubsequence[A](as: List2[A], sub: List2[A]): Boolean = {
@@ -124,7 +124,7 @@ object List2 {
       if(sub != r) {
         o match {
           case Nil2 => false
-          case Cons(x, xs) => if(x == head(s)) {
+          case Cons2(x, xs) => if(x == head(s)) {
             loop(xs, tail(s), append(r, x))
           }  else {
             loop(xs, sub, List2[A]())
@@ -170,7 +170,7 @@ class Chapter3Test extends FunSpec with Matchers {
   }
 
   it("Test fold") {
-    foldRight(List2(1,2,3,4), Nil2:List2[Int])(Cons(_,_)) should be(List2(1,2,3,4))
+    foldRight(List2(1,2,3,4), Nil2:List2[Int])(Cons2(_,_)) should be(List2(1,2,3,4))
   }
 
   it("Length") {

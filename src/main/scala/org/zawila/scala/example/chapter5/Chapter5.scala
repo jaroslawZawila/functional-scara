@@ -28,9 +28,16 @@ sealed trait Stream[+A] {
     case _ => Empty
   }
 
-  def drop(n: Int): Stream[A] = ???
+  def drop(n: Int): Stream[A] = this match {
+    case Cons(h, t) if n > 1  => t().drop(n - 1)
+    case Cons(h, t) if n == 1 => t()
+    case _ => this
+  }
 
-  def takeWhile(p: A => Boolean): Stream[A] = ???
+  def takeWhile(p: A => Boolean): Stream[A] = this match {
+    case Cons(h,t) if p(h()) => cons(h(), t() takeWhile p)
+    case _ => empty
+  }
 }
 
 case object Empty extends Stream[Nothing]
@@ -60,5 +67,15 @@ class StreamTest extends FunSpec with Matchers {
   it("Stream take") {
     Stream(1, 2, 3, 4).take(2).toList should be(List(1, 2))
     Stream(1, 2, 3, 4).take(0).toList should be(List())
+  }
+
+  it("Stream drop") {
+    Stream(1, 2, 3, 4).drop(2).toList should be(List(3, 4))
+    Stream(1, 2, 3, 4).drop(0).toList should be(List(1,2,3,4))
+    Stream(1, 2, 3, 4).drop(5).toList should be(List())
+  }
+
+  it("Stream takeWhile") {
+    Stream(1,2,3,4).takeWhile(_ <= 3).toList should be(List(1, 2, 3))
   }
 }

@@ -69,6 +69,8 @@ sealed trait Stream[+A] {
 
   def flatMap[B](f: A => Stream[B]): Stream[B] = foldRight(empty[B])((a,b) => f(a).foldRight(b)((aa,bb) => cons(aa, bb)))
 
+
+
 }
 
 case object Empty extends Stream[Nothing]
@@ -85,6 +87,21 @@ object Stream {
   def empty[A]: Stream[A] = Empty
 
   def apply[A](as: A*): Stream[A] = if (as.isEmpty) empty else cons(as.head, apply(as.tail: _*))
+
+  def constant[A](a: A): Stream[A] = {
+    lazy val tail: Stream[A] = Cons(() => a, () => tail)
+    tail
+  }
+
+  def from(n: Int): Stream[Int] = cons(n, from(n + 1))
+
+  def fibs(): Stream[Int] = {
+    def loop(f0: Int, f1: Int): Stream[Int] =
+      cons(f0, loop(f1, f0+f1))
+    loop(0, 1)
+  }
+
+  def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] = ???
 }
 
 
@@ -139,5 +156,17 @@ class StreamTest extends FunSpec with Matchers {
 
   it("Append") {
     Stream(1,2,3,4).append(Stream(5)).toList should be(List(1,2,3,4,5))
+  }
+
+  it("Constant") {
+    Stream.constant(4).take(3).toList should be(List(4,4,4))
+  }
+
+  it("From") {
+    Stream.from(1).take(4).toList should be(List(1,2,3,4))
+  }
+
+  it("fibonacci") {
+    Stream.fibs().take(7).toList should be(List(0,1,1,2,3,5,8))
   }
 }

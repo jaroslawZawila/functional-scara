@@ -69,8 +69,37 @@ sealed trait Stream[+A] {
 
   def flatMap[B](f: A => Stream[B]): Stream[B] = foldRight(empty[B])((a,b) => f(a).foldRight(b)((aa,bb) => cons(aa, bb)))
 
+  def map2[B](f: A => B): Stream[B] = unfold(this)(s => s match {
+    case Cons(h, t) => Some((f(h()), t()))
+    case _ => None})
 
+  def take3(n: Int): Stream[A] = unfold((this, n))(s => s match {
+    case (Cons(h, t), nn) if nn > 0 => Some((h(), (t(), nn - 1)))
+    case _ => None
+  })
 
+  def takeWhile3(f: A => Boolean): Stream[A] = unfold(this)(s => s match {
+    case Cons(h, t) if f(h()) => Some(h(), t())
+    case _ => None
+  })
+
+  def zipWith[B, C](as: Stream[B])(f: (A,B) => C): Stream[C] = unfold((this, as))(s => s._1 match {
+    case Cons(h1, t1) => {
+      s._2 match {
+        case Cons(h2, t2) => Some(f(h1(), h2()), (t1(), t2()))
+        case _ => None
+      }
+    }
+    case _ => None
+  })
+
+  def zipAll[B](s2: Stream[B]): Stream[(Option[A],Option[B])] = unfold((this, s2))(s => s._1 match {
+    case Cons(h1, t1) => s._2 match {
+      case Cons(h2, t2) => Some((Some(h1()), Some(h2())), (t1(), t2()))
+      case _ => Some((Some(h1()), None), (t1(), Stream.empty))
+    }
+    case _ => None
+  })
 }
 
 case object Empty extends Stream[Nothing]
@@ -101,7 +130,17 @@ object Stream {
     loop(0, 1)
   }
 
-  def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] = ???
+  def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] = f(z) match {
+    case Some((h,s)) => cons(h, unfold(s)(f))
+    case None => empty
+  }
+
+  def fibs2(): Stream[Int] = unfold((0, 1))(s => Some((s._1 , (s._2, s._2 + s._1))))
+
+  def from2(n: Int): Stream[Int] = unfold(n)(s => Some(s, s+ 1))
+
+  def constant2[A](a: A): Stream[A] = unfold(a)(s => Some(s,s))
+
 }
 
 
@@ -168,5 +207,44 @@ class StreamTest extends FunSpec with Matchers {
 
   it("fibonacci") {
     Stream.fibs().take(7).toList should be(List(0,1,1,2,3,5,8))
+  }
+
+  it("Unfold") {
+    Stream.unfold(1)((p) => Some((p, p+1))).take(5).toList should be(List(1,2,3,4,5))
+  }
+
+  it("Constant2") {
+    Stream.constant2(4).take(3).toList should be(List(4,4,4))
+  }
+
+  it("From2") {
+    Stream.from2(1).take(4).toList should be(List(1,2,3,4))
+  }
+
+  it("fibonacci2") {
+    Stream.fibs2().take(7).toList should be(List(0,1,1,2,3,5,8))
+  }
+
+  it("Fold map2") {
+    Stream(1,2,3,4).map2(_ + 1).toList should be(List(2,3,4,5))
+    Stream.empty[Int].map2(_ + 1).toList should be(List.empty[Int])
+  }
+
+  it("Stream take3") {
+    Stream(1, 2, 3, 4).take3(2).toList should be(List(1, 2))
+    Stream(1, 2, 3, 4).take3(0).toList should be(List())
+  }
+
+  it("Stream takeWhile3") {
+    Stream(1,2,3,4).takeWhile3(_ <= 3).toList should be(List(1, 2, 3))
+    Stream(1,2,3,4).takeWhile3(_ <= 6).toList should be(List(1, 2, 3, 4))
+  }
+
+  it("zipWith") {
+    Stream(1,2,3,4).zipWith(Stream(1,2,3,4))((a, b) => a + b).toList should be(List(2,4,6,8))
+  }
+
+  it("zipAll") {
+    Stream(1,2,3).zipAll(Stream(3,4,5)).toList should be(List((Some(1),Some(3)),(Some(2),Some(4)),(Some(3),Some(5))))
   }
 }

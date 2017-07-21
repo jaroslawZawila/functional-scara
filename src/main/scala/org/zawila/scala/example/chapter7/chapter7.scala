@@ -12,6 +12,8 @@ object chapter7 {
 
 }
 
+// 7.1
+
 object  Par {
   def unit[A](a: A) = ???
   def map2[A, B, C](f1: A => B, f2: A => B)(f: (B,B) => C) = ???
